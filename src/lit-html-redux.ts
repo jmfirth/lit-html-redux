@@ -48,7 +48,7 @@ export class Publisher<TState> {
   }
 }
 
-export const createPublisher = <TState>(root: SubscriberComponent<TState>, store: Store<TState>) =>
+export const createPublisher = <TState>(root: RootComponent<TState>, store: Store<TState>) =>
   new Publisher(root, store)
 
 export type ConnectedContext<
