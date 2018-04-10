@@ -1,40 +1,39 @@
 import { html, render } from 'lit-html/lib/lit-extended';
-import { connect, Provider } from '../src/lit-html-redux';
+import { createSubscriber, Publisher } from '../src/lit-html-redux';
 import { createStore, bindActionCreators } from 'redux';
 
-type TodoState = string[];
+type CounterState = number;
 
-const todos = (state = [], action) => {
+const todos = (state = 0, action) => {
   switch (action.type) {
-    case 'ADD_TODO':
-      return state.concat([action.text]);
+    case 'INCREMENT':
+      return state += 1;
+    case 'DECREMENT':
+      return state -= 1;
     default:
       return state;
   }
 };
 
-const store = createStore<TodoState>(todos, ['Use Redux']);
+const store = createStore<CounterState>(todos, 0);
 
-const actions = {
-  add() {
-    return {
-      type: 'ADD_TODO',
-      text: `Hello ${Math.random()}`
-    };
-  },
+const actionCreators = {
+  decrement: () => ({ type: 'DECREMENT' }),
+  increment: () => ({ type: 'INCREMENT' }),
 };
 
-const todosView = connect(
-  (state: TodoState) => ({ todos: state }),
-  dispatch => ({ actions: bindActionCreators(actions, dispatch) })
-)(({todos, actions}) => html`
-  ${ todos.map(text => html`<p>${ text }</p>`) }
-  <button type="button" onclick="${ () => actions.add() }">Add</button>
+const counterView = createSubscriber(
+  (counter: CounterState) => ({ counter }),
+  dispatch => ({ actions: bindActionCreators(actionCreators, dispatch) })
+)(({ counter, actions }) => html`
+  <p>${ counter }</p>
+  <button type="button" onclick="${ () => actions.increment() }">Increment</button>
+  <button type="button" onclick="${ () => actions.decrement() }">Decrement</button>
 `);
 
-const provider = new Provider(
-  store,
-  provider => render(todosView({ provider }), document.body)
+const provider = new Publisher(
+  provider => render(counterView(provider), document.body),
+  store
 );
 
-provider.update();
+provider.mount();
